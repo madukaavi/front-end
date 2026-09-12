@@ -15,33 +15,33 @@ import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import LogoutIcon from "@mui/icons-material/Logout";
 
 import { useNavigate } from "react-router-dom";
-import { storage } from "../../utils/storage";
+  import { storage } from "../../utils/storage";
 
 interface HeaderProps {
   title?: string;
-  onMenuClick?: () => void;
+      onMenuClick?: () => void;
 }
 
-const SIDEBAR_WIDTH = 230;
+   const SIDEBAR_WIDTH = 230;
 
-const Header = ({
+    const Header = ({
   title = "Dashboard",
 }: HeaderProps) => {
   const navigate = useNavigate();
 
-  const user = storage.getUser();
+    const user = storage.getUser();
 
-  const fullName = user?.fullName?.trim() || "User";
-  const email = user?.email?.trim() || "";
+    const fullName = user?.fullName?.trim() || "User";
+    const email = user?.email?.trim() || "";
 
-  const initial = fullName.charAt(0).toUpperCase() || "U";
+    const initial = fullName.charAt(0).toUpperCase() || "U";
 
-  const [anchorEl, setAnchorEl] =
+     const [anchorEl, setAnchorEl] =
     useState<null | HTMLElement>(null);
 
-  const menuOpen = Boolean(anchorEl);
+    const menuOpen = Boolean(anchorEl);
 
-  const handleMenuOpen = (
+    const handleMenuOpen = (
     event: React.MouseEvent<HTMLElement>
   ) => {
     setAnchorEl(event.currentTarget);
@@ -93,19 +93,19 @@ const Header = ({
           justifyContent: "space-between",
         }}
       >
-        {/* LEFT - PAGE NAME */}
+      
         <Box>
-          <Typography
+            <Typography
             sx={{
-              fontSize: {
-                xs: 20,
-                sm: 22,
+                fontSize: {
+                 xs: 20,
+                 sm: 22,
                 md: 23,
               },
-              fontWeight: 700,
+                fontWeight: 700,
               lineHeight: 1.1,
-              color: "#111827",
-            }}
+                 color: "#111827",
+        }}
           >
             {title}
           </Typography>
@@ -121,7 +121,7 @@ const Header = ({
           </Typography>
         </Box>
 
-        {/* RIGHT - USER */}
+        
         <Box
           sx={{
             display: "flex",
@@ -149,7 +149,7 @@ const Header = ({
                 whiteSpace: "nowrap",
               }}
             >
-              {fullName}
+              
             </Typography>
 
             {email && (
@@ -204,7 +204,7 @@ const Header = ({
         </Box>
       </Toolbar>
 
-      {/* USER DROPDOWN */}
+    
       <Menu
         anchorEl={anchorEl}
         open={menuOpen}

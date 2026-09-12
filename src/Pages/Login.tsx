@@ -66,7 +66,7 @@ function Login() {
   ) => {
     e.preventDefault();
 
-    // Clear old validation errors
+  
     setEmailError("");
     setPasswordError("");
 
@@ -75,7 +75,7 @@ function Login() {
       password,
     });
 
-    // Zod validation
+   
     if (!validation.success) {
       const errors =
         validation.error.flatten().fieldErrors;
@@ -89,12 +89,12 @@ function Login() {
     try {
       await login(validation.data);
 
-      // Success Toast
+      
       toast.success("Login successful!");
 
       navigate("/dashboard");
     } catch (err) {
-      // API Error Toast
+     
       toast.error(
         getApiErrorMessage(err, "Login failed")
       );
@@ -107,7 +107,7 @@ function Login() {
       className="min-h-screen w-full bg-white overflow-hidden"
     >
       <div className="flex min-h-screen w-full flex-col md:flex-row">
-        {/* LEFT IMAGE SIDE */}
+       
         <section
           ref={imageRef}
           className="
@@ -140,7 +140,7 @@ function Login() {
           </div>
         </section>
 
-        {/* RIGHT FORM SIDE */}
+        
         <section
           ref={formRef}
           className="
@@ -160,7 +160,7 @@ function Login() {
           "
         >
           <div className="w-full max-w-[390px]">
-            {/* Heading */}
+           
             <div className="mb-10">
               <h2 className="text-[27px] text-center font-semibold tracking-[-0.5px] text-[#171717]">
                 Welcome Back
@@ -171,9 +171,9 @@ function Login() {
               </p>
             </div>
 
-            {/* Form */}
+            
             <form onSubmit={handleSubmit}>
-              {/* Email */}
+             
               <div className="mb-5">
                 <label
                   htmlFor="email"
@@ -218,7 +218,7 @@ function Login() {
                 )}
               </div>
 
-              {/* Password */}
+              
               <div className="mb-7">
                 <label
                   htmlFor="password"
@@ -328,7 +328,7 @@ function Login() {
                 )}
               </div>
 
-              {/* Sign In */}
+              
               <button
                 type="submit"
                 disabled={loading}
@@ -354,7 +354,7 @@ function Login() {
               </button>
             </form>
 
-            {/* Register Link */}
+            
             <p className="mt-4 text-center text-[12px] text-[#777777]">
               Don't Have An Account?{" "}
 

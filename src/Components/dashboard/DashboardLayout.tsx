@@ -9,7 +9,7 @@ import { Outlet } from "react-router-dom";
 
 const SIDEBAR_WIDTH = 232;
 
-const DashboardLayout = () => {
+          const DashboardLayout = () => {
   const location = useLocation();
 
   const getPageTitle = () => {
@@ -37,10 +37,10 @@ const DashboardLayout = () => {
         bgcolor: "#f8fafc",
       }}
     >
-      {/* SIDEBAR */}
+
       <Sidebar />
 
-      {/* MAIN AREA */}
+  
       <Box
         sx={{
           flex: 1,
@@ -51,10 +51,10 @@ const DashboardLayout = () => {
           },
         }}
       >
-        {/* TOP BAR */}
+    
         <Header title={getPageTitle()} />
 
-        {/* PAGE CONTENT */}
+    
         <Box
           component="main"
           sx={{

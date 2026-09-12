@@ -23,7 +23,7 @@ const useCustomers = () => {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Load all customers
+ 
   const loadCustomers = useCallback(async () => {
     try {
       setLoading(true);
@@ -45,12 +45,12 @@ const useCustomers = () => {
     }
   }, []);
 
-  // Load customers when page opens
+  
   useEffect(() => {
     loadCustomers();
   }, [loadCustomers]);
 
-  // Create customer
+
   const createCustomer = async (
     data: CustomerData
   ) => {
@@ -77,7 +77,7 @@ const useCustomers = () => {
     }
   };
 
-  // Update customer
+ 
   const updateCustomer = async (
     id: string,
     data: CustomerData
@@ -105,7 +105,7 @@ const useCustomers = () => {
     }
   };
 
-  // Delete customer
+
   const deleteCustomer = async (
     id: string
   ) => {

@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import gsap from "gsap";
 import toast from "react-hot-toast";
 
-import posImage from "../assets/ChatGPT.png";
+import posImage from "../assets/pos.jpg";
 
 import { useSignup } from "../Hooks/useSignup";
 import { signupSchema } from "../validators/auth.schema";
@@ -68,7 +68,7 @@ function Register() {
   ) => {
     e.preventDefault();
 
-    // Clear old validation errors
+    
     setFullNameError("");
     setEmailError("");
     setPasswordError("");
@@ -79,7 +79,7 @@ function Register() {
       password,
     });
 
-    // Zod validation
+    
     if (!validation.success) {
       const errors =
         validation.error.flatten().fieldErrors;
@@ -94,14 +94,14 @@ function Register() {
     try {
       await signup(validation.data);
 
-      // Success Toast
+      
       toast.success(
         "Account created successfully!"
       );
 
       navigate("/");
     } catch (err) {
-      // API Error Toast
+      
       toast.error(
         getApiErrorMessage(err, "Signup failed")
       );
@@ -114,7 +114,7 @@ function Register() {
       className="min-h-screen w-full bg-white overflow-hidden"
     >
       <div className="flex min-h-screen w-full flex-col md:flex-row">
-        {/* LEFT IMAGE SIDE */}
+       
         <section
           ref={imageRef}
           className="
@@ -167,7 +167,7 @@ function Register() {
           "
         >
           <div className="w-full max-w-[390px]">
-            {/* Heading */}
+            
             <div className="mb-10">
               <h2 className="text-[27px] text-center font-semibold tracking-[-0.5px] text-[#171717]">
                 Create Account
@@ -178,9 +178,9 @@ function Register() {
               </p>
             </div>
 
-            {/* Form */}
+           
             <form onSubmit={handleSubmit}>
-              {/* Full Name */}
+             
               <div className="mb-5">
                 <label
                   htmlFor="fullName"
@@ -225,7 +225,7 @@ function Register() {
                 )}
               </div>
 
-              {/* Email */}
+            
               <div className="mb-5">
                 <label
                   htmlFor="email"
@@ -270,7 +270,7 @@ function Register() {
                 )}
               </div>
 
-              {/* Password */}
+              
               <div className="mb-7">
                 <label
                   htmlFor="password"
@@ -380,7 +380,7 @@ function Register() {
                 )}
               </div>
 
-              {/* Sign Up */}
+       
               <button
                 type="submit"
                 disabled={loading}
@@ -406,7 +406,7 @@ function Register() {
               </button>
             </form>
 
-            {/* Login Link */}
+      
             <p className="mt-4 text-center text-[12px] text-[#777777]">
               Already Have An Account?{" "}
 

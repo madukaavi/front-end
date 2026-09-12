@@ -1,5 +1,4 @@
 import {
-  Box,
   Button,
   Dialog,
   DialogActions,
@@ -8,28 +7,23 @@ import {
   Typography,
 } from "@mui/material";
 
-export interface DeleteProduct {
-  _id: string;
-  description: string;
-  unitPrice: number;
-  qtyOnHand: number;
-}
-
-interface DeleteProductModalProps {
+interface ConfirmDialogProps {
   open: boolean;
-  product: DeleteProduct | null;
-  loading?: boolean;
+  title?: string;
+  message: string;
   onClose: () => void;
-  onConfirm: () => void | Promise<void>;
+  onConfirm: () => void;
+  loading?: boolean;
 }
 
-const DeleteProductModal = ({
+const ConfirmDialog = ({
   open,
-  product,
-  loading = false,
+  title = "Confirm Delete",
+  message,
   onClose,
   onConfirm,
-}: DeleteProductModalProps) => {
+  loading = false,
+}: ConfirmDialogProps) => {
   return (
     <Dialog
       open={open}
@@ -41,20 +35,19 @@ const DeleteProductModal = ({
           sx: {
             borderRadius: 3,
             p: 1,
-            boxShadow: "0 20px 50px rgba(0,0,0,0.20)",
           },
         },
       }}
     >
       <DialogTitle
         sx={{
-          fontSize: 19,
+          fontSize: 18,
           fontWeight: 700,
           color: "#111827",
           pb: 1,
         }}
       >
-        Delete Product
+        {title}
       </DialogTitle>
 
       <DialogContent sx={{ pt: "8px !important" }}>
@@ -65,52 +58,14 @@ const DeleteProductModal = ({
             lineHeight: 1.6,
           }}
         >
-          Are you sure you want to delete this product?
+          {message}
         </Typography>
-
-        {product && (
-          <Box
-            sx={{
-              mt: 2,
-              px: 1.5,
-              py: 1.25,
-              borderRadius: 2,
-              bgcolor: "#f8fafc",
-              border: "1px solid #e5e7eb",
-            }}
-          >
-            <Typography
-              sx={{
-                fontSize: 14,
-                fontWeight: 600,
-                color: "#111827",
-              }}
-            >
-              {product.description}
-            </Typography>
-
-            <Typography
-              sx={{
-                mt: 0.4,
-                fontSize: 12,
-                color: "#94a3b8",
-              }}
-            >
-              Rs.{" "}
-              {Number(product.unitPrice).toLocaleString("en-LK", {
-                minimumFractionDigits: 2,
-              })}{" "}
-              • Qty: {product.qtyOnHand}
-            </Typography>
-          </Box>
-        )}
       </DialogContent>
 
       <DialogActions
         sx={{
-          px: 2.5,
+          px: 2,
           pb: 2,
-          pt: 1.5,
           gap: 1,
         }}
       >
@@ -120,12 +75,10 @@ const DeleteProductModal = ({
           variant="outlined"
           sx={{
             textTransform: "none",
-            fontSize: 14,
-            fontWeight: 600,
-            color: "#374151",
-            borderColor: "#d1d5db",
             borderRadius: 2,
             px: 2.5,
+            color: "#374151",
+            borderColor: "#d1d5db",
             "&:hover": {
               borderColor: "#9ca3af",
               bgcolor: "#f9fafb",
@@ -141,11 +94,9 @@ const DeleteProductModal = ({
           variant="contained"
           sx={{
             textTransform: "none",
-            fontSize: 14,
-            fontWeight: 600,
-            bgcolor: "#ef4444",
             borderRadius: 2,
             px: 2.5,
+            bgcolor: "#ef4444",
             boxShadow: "none",
             "&:hover": {
               bgcolor: "#dc2626",
@@ -160,4 +111,4 @@ const DeleteProductModal = ({
   );
 };
 
-export default DeleteProductModal;
+export default ConfirmDialog;

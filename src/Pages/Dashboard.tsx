@@ -5,12 +5,9 @@ import {
   Button,
   Card,
   CardContent,
-  Pagination,
-  Stack,
   Table,
   TableBody,
   TableCell,
-  TableContainer,
   TableHead,
   TableRow,
   Typography,
@@ -20,17 +17,16 @@ import PeopleAltOutlinedIcon from "@mui/icons-material/PeopleAltOutlined";
 import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
 import ShoppingCartOutlinedIcon from "@mui/icons-material/ShoppingCartOutlined";
 import AttachMoneyOutlinedIcon from "@mui/icons-material/AttachMoneyOutlined";
-import PrintOutlinedIcon from "@mui/icons-material/PrintOutlined";
 import PictureAsPdfOutlinedIcon from "@mui/icons-material/PictureAsPdfOutlined";
 
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
+import { jsPDF } from "jspdf";
+import { autoTable } from "jspdf-autotable";
+
+import { storage } from "../utils/storage";
 
 import useCustomers from "../Hooks/useCustomers";
 import useProducts from "../Hooks/useProducts";
 import useOrders from "../Hooks/useOrders";
-
-import { storage } from "../utils/storage";
 
 interface Customer {
   _id: string;
@@ -48,98 +44,63 @@ interface Order {
   customer: string;
 }
 
-const ORDERS_PER_PAGE = 5;
-
 const Dashboard = () => {
-  const { customers } = useCustomers();
-  const { products } = useProducts();
-  const { orders } = useOrders();
-
   const user = storage.getUser();
 
   const fullName = user?.fullName?.trim() || "User";
 
-  const [page, setPage] = useState(1);
+  const { customers } = useCustomers();
+  const { products } = useProducts();
+  const { orders } = useOrders();
 
-  /*
-   * ----------------------------------------------------
-   * CUSTOMER NAME
-   * ----------------------------------------------------
-   */
+  const [isGeneratingPdf, setIsGeneratingPdf] =
+    useState(false);
+
+
+
+  const totalSales = useMemo(() => {
+    return orders.reduce(
+      (total: number, order: Order) =>
+        total + Number(order.totalCost || 0),
+      0
+    );
+  }, [orders]);
+
+
+  const recentOrders = useMemo(() => {
+    return [...orders]
+      .sort(
+        (a: Order, b: Order) =>
+          new Date(b.date).getTime() -
+          new Date(a.date).getTime()
+      )
+      .slice(0, 5);
+  }, [orders]);
+
 
   const getCustomerName = (customerId: string) => {
     const customer = customers.find(
       (item: Customer) => item._id === customerId
     );
 
-    return customer?.name || customerId;
+    return customer?.name || customerId || "Unknown";
   };
 
-  /*
-   * ----------------------------------------------------
-   * SORT ORDERS
-   * Latest orders first
-   * ----------------------------------------------------
-   */
+ 
 
-  const sortedOrders = useMemo(() => {
-    return [...orders].sort((a: Order, b: Order) => {
-      return (
-        new Date(b.date).getTime() -
-        new Date(a.date).getTime()
-      );
-    });
-  }, [orders]);
-
-  /*
-   * ----------------------------------------------------
-   * PAGINATION
-   * ----------------------------------------------------
-   */
-
-  const totalPages = Math.max(
-    1,
-    Math.ceil(sortedOrders.length / ORDERS_PER_PAGE)
-  );
-
-  const currentOrders = sortedOrders.slice(
-    (page - 1) * ORDERS_PER_PAGE,
-    page * ORDERS_PER_PAGE
-  );
-
-  const handlePageChange = (
-    _event: React.ChangeEvent<unknown>,
-    value: number
-  ) => {
-    setPage(value);
+  const formatCurrency = (value: number) => {
+    return `Rs. ${value.toLocaleString("en-LK", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })}`;
   };
 
-  /*
-   * ----------------------------------------------------
-   * DASHBOARD TOTALS
-   * ----------------------------------------------------
-   */
-
-  const totalCustomers = customers.length;
-
-  const totalProducts = products.length;
-
-  const totalOrders = orders.length;
-
-  const totalSales = orders.reduce(
-    (total: number, order: Order) =>
-      total + Number(order.totalCost || 0),
-    0
-  );
-
-  /*
-   * ----------------------------------------------------
-   * DATE FORMAT
-   * ----------------------------------------------------
-   */
+  
 
   const formatDate = (date: string) => {
-    if (!date) return "-";
+    if (!date) {
+      return "-";
+    }
 
     const parsedDate = new Date(date);
 
@@ -147,417 +108,595 @@ const Dashboard = () => {
       return date;
     }
 
-    return parsedDate.toLocaleDateString("en-US");
-  };
-
-  /*
-   * ----------------------------------------------------
-   * CURRENCY
-   * ----------------------------------------------------
-   */
-
-  const formatCurrency = (amount: number) => {
-    return `Rs. ${Number(amount || 0).toLocaleString(
-      "en-US",
-      {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      }
-    )}`;
-  };
-
-  /*
-   * ----------------------------------------------------
-   * PRINT ORDER SUMMARY
-   * ----------------------------------------------------
-   */
-
-  const handlePrint = () => {
-    const printWindow = window.open(
-      "",
-      "_blank",
-      "width=1000,height=800"
-    );
-
-    if (!printWindow) {
-      return;
-    }
-
-    const rows = sortedOrders
-      .map(
-        (order: Order) => `
-          <tr>
-            <td>#${order._id.slice(-6)}</td>
-            <td>${formatDate(order.date)}</td>
-            <td>${getCustomerName(order.customer)}</td>
-            <td style="text-align:right">
-              ${formatCurrency(order.totalCost)}
-            </td>
-          </tr>
-        `
-      )
-      .join("");
-
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>Order Summary</title>
-
-          <style>
-            * {
-              box-sizing: border-box;
-            }
-
-            body {
-              font-family: Arial, Helvetica, sans-serif;
-              padding: 40px;
-              color: #111827;
-              background: #ffffff;
-            }
-
-            .header {
-              display: flex;
-              justify-content: space-between;
-              align-items: flex-start;
-              margin-bottom: 30px;
-            }
-
-            .title {
-              font-size: 26px;
-              font-weight: 700;
-              margin: 0;
-            }
-
-            .subtitle {
-              color: #64748b;
-              font-size: 13px;
-              margin-top: 6px;
-            }
-
-            .summary {
-              display: flex;
-              gap: 35px;
-              margin-bottom: 30px;
-            }
-
-            .summary-item {
-              border: 1px solid #e5e7eb;
-              padding: 15px 20px;
-              border-radius: 8px;
-              min-width: 150px;
-            }
-
-            .summary-label {
-              color: #64748b;
-              font-size: 12px;
-              margin-bottom: 7px;
-            }
-
-            .summary-value {
-              font-size: 20px;
-              font-weight: 700;
-            }
-
-            table {
-              width: 100%;
-              border-collapse: collapse;
-              margin-top: 20px;
-            }
-
-            th {
-              background: #f8fafc;
-              text-align: left;
-              font-size: 12px;
-              color: #64748b;
-              padding: 12px;
-              border: 1px solid #e5e7eb;
-            }
-
-            td {
-              padding: 12px;
-              font-size: 13px;
-              border: 1px solid #e5e7eb;
-            }
-
-            .total {
-              text-align: right;
-              font-weight: 700;
-            }
-
-            @media print {
-              body {
-                padding: 20px;
-              }
-            }
-          </style>
-        </head>
-
-        <body>
-
-          <div class="header">
-            <div>
-              <h1 class="title">Order Summary</h1>
-              <div class="subtitle">
-                POSZ - Point of Sale
-              </div>
-            </div>
-
-            <div>
-              <strong>${fullName}</strong>
-            </div>
-          </div>
-
-          <div class="summary">
-
-            <div class="summary-item">
-              <div class="summary-label">
-                Total Orders
-              </div>
-              <div class="summary-value">
-                ${totalOrders}
-              </div>
-            </div>
-
-            <div class="summary-item">
-              <div class="summary-label">
-                Total Sales
-              </div>
-              <div class="summary-value">
-                ${formatCurrency(totalSales)}
-              </div>
-            </div>
-
-            <div class="summary-item">
-              <div class="summary-label">
-                Customers
-              </div>
-              <div class="summary-value">
-                ${totalCustomers}
-              </div>
-            </div>
-
-          </div>
-
-          <table>
-
-            <thead>
-              <tr>
-                <th>ORDER ID</th>
-                <th>DATE</th>
-                <th>CUSTOMER</th>
-                <th style="text-align:right">
-                  TOTAL
-                </th>
-              </tr>
-            </thead>
-
-            <tbody>
-              ${
-                rows ||
-                `
-                  <tr>
-                    <td colspan="4" style="text-align:center">
-                      No orders available
-                    </td>
-                  </tr>
-                `
-              }
-            </tbody>
-
-          </table>
-
-        </body>
-      </html>
-    `);
-
-    printWindow.document.close();
-
-    printWindow.focus();
-
-    setTimeout(() => {
-      printWindow.print();
-      printWindow.close();
-    }, 300);
-  };
-
-  /*
-   * ----------------------------------------------------
-   * DOWNLOAD PDF
-   * ----------------------------------------------------
-   */
-
-  const handleDownloadPDF = () => {
-    const doc = new jsPDF();
-
-    /*
-     * Title
-     */
-
-    doc.setFontSize(20);
-    doc.setFont("helvetica", "bold");
-    doc.text("Order Summary", 14, 20);
-
-    /*
-     * Subtitle
-     */
-
-    doc.setFontSize(10);
-    doc.setFont("helvetica", "normal");
-    doc.text("POSZ - Point of Sale", 14, 27);
-
-    doc.text(`User: ${fullName}`, 14, 34);
-
-    /*
-     * Summary
-     */
-
-    doc.setFontSize(11);
-    doc.setFont("helvetica", "bold");
-
-    doc.text(
-      `Total Orders: ${totalOrders}`,
-      14,
-      45
-    );
-
-    doc.text(
-      `Total Customers: ${totalCustomers}`,
-      75,
-      45
-    );
-
-    doc.text(
-      `Total Sales: ${formatCurrency(totalSales)}`,
-      145,
-      45
-    );
-
-    /*
-     * Table
-     */
-
-    const tableRows = sortedOrders.map(
-      (order: Order) => [
-        `#${order._id.slice(-6)}`,
-        formatDate(order.date),
-        getCustomerName(order.customer),
-        formatCurrency(order.totalCost),
-      ]
-    );
-
-    autoTable(doc, {
-      startY: 55,
-
-      head: [
-        [
-          "ORDER ID",
-          "DATE",
-          "CUSTOMER",
-          "TOTAL",
-        ],
-      ],
-
-      body:
-        tableRows.length > 0
-          ? tableRows
-          : [
-              [
-                "-",
-                "-",
-                "No orders available",
-                "-",
-              ],
-            ],
-
-      styles: {
-        fontSize: 9,
-        cellPadding: 4,
-      },
-
-      headStyles: {
-        fontSize: 9,
-        fontStyle: "bold",
-      },
-
-      columnStyles: {
-        0: {
-          cellWidth: 35,
-        },
-        1: {
-          cellWidth: 35,
-        },
-        2: {
-          cellWidth: 70,
-        },
-        3: {
-          cellWidth: 40,
-          halign: "right",
-        },
-      },
+    return parsedDate.toLocaleDateString("en-US", {
+      month: "numeric",
+      day: "numeric",
+      year: "numeric",
     });
+  };
 
-    /*
-     * Footer
-     */
+  
 
-    const pageCount =
-      (doc as any).internal.getNumberOfPages();
+  const generatePdf = () => {
+    try {
+      setIsGeneratingPdf(true);
 
-    for (let i = 1; i <= pageCount; i++) {
-      doc.setPage(i);
+      const doc = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4",
+      });
+
+      const pageWidth =
+        doc.internal.pageSize.getWidth();
+
+      const pageHeight =
+        doc.internal.pageSize.getHeight();
+
+     
+
+      doc.setTextColor(17, 24, 39);
+
+      doc.setFont(
+        "helvetica",
+        "bold"
+      );
+
+      doc.setFontSize(20);
+
+      doc.text(
+        "ORDER SUMMARY",
+        15,
+        21
+      );
+
+      
+      doc.setFont(
+        "helvetica",
+        "normal"
+      );
+
+      doc.setFontSize(9);
+
+      doc.setTextColor(
+        100,
+        116,
+        139
+      );
+
+      doc.text(
+        "Point of Sale System",
+        15,
+        28
+      );
+
+     
+      doc.setTextColor(
+        37,
+        99,
+        235
+      );
+
+      doc.setFont(
+        "helvetica",
+        "bold"
+      );
+
+      doc.setFontSize(18);
+
+      doc.text(
+        "POSZ",
+        pageWidth - 15,
+        24,
+        {
+          align: "right",
+        }
+      );
+
+
+      doc.setDrawColor(
+        226,
+        232,
+        240
+      );
+
+      doc.setLineWidth(0.5);
+
+      doc.line(
+        15,
+        37,
+        pageWidth - 15,
+        37
+      );
+
+  
+      doc.setFont(
+        "helvetica",
+        "normal"
+      );
 
       doc.setFontSize(8);
 
-      doc.text(
-        `Generated by POSZ`,
-        14,
-        290
+      doc.setTextColor(
+        100,
+        116,
+        139
       );
 
       doc.text(
-        `Page ${i} of ${pageCount}`,
-        170,
-        290
+        "Prepared For",
+        15,
+        47
       );
+
+      doc.setFont(
+        "helvetica",
+        "bold"
+      );
+
+      doc.setTextColor(
+        30,
+        41,
+        59
+      );
+
+      doc.text(
+        fullName,
+        15,
+        53
+      );
+
+    
+      const generatedDate =
+        new Date().toLocaleDateString(
+          "en-GB",
+          {
+            day: "2-digit",
+            month: "short",
+            year: "numeric",
+          }
+        );
+
+      doc.setFont(
+        "helvetica",
+        "normal"
+      );
+
+      doc.setFontSize(8);
+
+      doc.setTextColor(
+        100,
+        116,
+        139
+      );
+
+      doc.text(
+        "Generated Date",
+        pageWidth - 15,
+        47,
+        {
+          align: "right",
+        }
+      );
+
+      doc.setFont(
+        "helvetica",
+        "bold"
+      );
+
+      doc.setTextColor(
+        30,
+        41,
+        59
+      );
+
+      doc.text(
+        generatedDate,
+        pageWidth - 15,
+        53,
+        {
+          align: "right",
+        }
+      );
+
+
+      doc.setFont(
+        "helvetica",
+        "bold"
+      );
+
+      doc.setFontSize(11);
+
+      doc.setTextColor(
+        17,
+        24,
+        39
+      );
+
+      doc.text(
+        "Business Summary",
+        15,
+        67
+      );
+
+     
+      doc.setFont(
+        "helvetica",
+        "normal"
+      );
+
+      doc.setFontSize(9);
+
+      doc.setTextColor(
+        71,
+        85,
+        105
+      );
+
+      doc.text(
+        `Total Customers : ${customers.length}`,
+        15,
+        77
+      );
+
+      doc.text(
+        `Total Products  : ${products.length}`,
+        15,
+        84
+      );
+
+      doc.text(
+        `Total Orders    : ${orders.length}`,
+        15,
+        91
+      );
+
+      doc.text(
+        `Total Sales     : ${formatCurrency(
+          totalSales
+        )}`,
+        15,
+        98
+      );
+
+   
+
+      doc.setFont(
+        "helvetica",
+        "bold"
+      );
+
+      doc.setFontSize(11);
+
+      doc.setTextColor(
+        17,
+        24,
+        39
+      );
+
+      doc.text(
+        "Recent Orders",
+        15,
+        112
+      );
+
+      doc.setFont(
+        "helvetica",
+        "normal"
+      );
+
+      doc.setFontSize(8);
+
+      doc.setTextColor(
+        100,
+        116,
+        139
+      );
+
+      doc.text(
+        "Latest order transactions",
+        15,
+        118
+      );
+
+     
+
+      if (recentOrders.length > 0) {
+        autoTable(doc, {
+          startY: 124,
+
+          head: [
+            [
+              "ORDER ID",
+              "DATE",
+              "CUSTOMER",
+              "TOTAL",
+            ],
+          ],
+
+          body: recentOrders.map(
+            (order: Order) => [
+              `#${order._id
+                .slice(-6)
+                .toUpperCase()}`,
+
+              formatDate(
+                order.date
+              ),
+
+              getCustomerName(
+                order.customer
+              ),
+
+              formatCurrency(
+                order.totalCost
+              ),
+            ]
+          ),
+
+         
+
+          theme: "grid",
+
+          styles: {
+            font: "helvetica",
+            fontSize: 8.5,
+            cellPadding: 3.5,
+
+            textColor: [
+              51,
+              65,
+              85,
+            ],
+
+            lineColor: [
+              226,
+              232,
+              240,
+            ],
+
+            lineWidth: 0.25,
+
+            valign: "middle",
+          },
+
+       
+
+          headStyles: {
+            fillColor: [
+              37,
+              99,
+              235,
+            ],
+
+            textColor: [
+              255,
+              255,
+              255,
+            ],
+
+            fontStyle: "bold",
+
+            fontSize: 8,
+          },
+
+         
+
+          alternateRowStyles: {
+            fillColor: [
+              248,
+              250,
+              252,
+            ],
+          },
+
+        
+
+          columnStyles: {
+            0: {
+              cellWidth: 35,
+            },
+
+            1: {
+              cellWidth: 32,
+            },
+
+            2: {
+              cellWidth: "auto",
+            },
+
+            3: {
+              cellWidth: 38,
+              halign: "right",
+            },
+          },
+
+       
+
+          margin: {
+            left: 15,
+            right: 15,
+            bottom: 22,
+          },
+
+         
+          didDrawPage: (data) => {
+          
+
+            doc.setDrawColor(
+              226,
+              232,
+              240
+            );
+
+            doc.setLineWidth(0.3);
+
+            doc.line(
+              15,
+              pageHeight - 17,
+              pageWidth - 15,
+              pageHeight - 17
+            );
+
+            
+
+            doc.setFont(
+              "helvetica",
+              "normal"
+            );
+
+            doc.setFontSize(7);
+
+            doc.setTextColor(
+              100,
+              116,
+              139
+            );
+
+            doc.text(
+              "POSZ - Point of Sale System",
+              15,
+              pageHeight - 10
+            );
+
+          
+
+            doc.text(
+              `Page ${data.pageNumber}`,
+              pageWidth - 15,
+              pageHeight - 10,
+              {
+                align: "right",
+              }
+            );
+          },
+        });
+      } else {
+      
+
+        doc.setFont(
+          "helvetica",
+          "normal"
+        );
+
+        doc.setFontSize(9);
+
+        doc.setTextColor(
+          100,
+          116,
+          139
+        );
+
+        doc.text(
+          "No orders available.",
+          pageWidth / 2,
+          132,
+          {
+            align: "center",
+          }
+        );
+
+    
+
+        doc.setDrawColor(
+          226,
+          232,
+          240
+        );
+
+        doc.setLineWidth(0.3);
+
+        doc.line(
+          15,
+          pageHeight - 17,
+          pageWidth - 15,
+          pageHeight - 17
+        );
+
+        doc.setFont(
+          "helvetica",
+          "normal"
+        );
+
+        doc.setFontSize(7);
+
+        doc.setTextColor(
+          100,
+          116,
+          139
+        );
+
+        doc.text(
+          "POSZ - Point of Sale System",
+          15,
+          pageHeight - 10
+        );
+
+        doc.text(
+          "Page 1",
+          pageWidth - 15,
+          pageHeight - 10,
+          {
+            align: "right",
+          }
+        );
+      }
+
+  
+
+      const today =
+        new Date()
+          .toISOString()
+          .split("T")[0];
+
+      doc.save(
+        `POSZ-Order-Summary-${today}.pdf`
+      );
+    } catch (error) {
+      console.error(
+        "PDF generation error:",
+        error
+      );
+
+      alert(
+        "PDF generate කිරීමේදී error එකක් ආවා."
+      );
+    } finally {
+      setIsGeneratingPdf(false);
     }
-
-    /*
-     * Download
-     */
-
-    doc.save("POSZ-Order-Summary.pdf");
   };
 
   return (
     <Box
       sx={{
         width: "100%",
+        maxWidth: "100%",
       }}
     >
-      {/* =================================================
-          DASHBOARD GREETING
-          ================================================= */}
-
-      <Box sx={{ mb: 3 }}>
+ 
+      <Box
+        sx={{
+          mb: 3,
+        }}
+      >
         <Typography
           sx={{
             fontSize: {
-              xs: 24,
-              sm: 28,
-              md: 30,
+              xs: 22,
+              sm: 24,
+              md: 26,
             },
             fontWeight: 700,
-            color: "#111827",
             lineHeight: 1.2,
-            mb: 0.5,
+            color: "#111827",
           }}
         >
-          Good Morning, {fullName} 👋
+          Good Morning,  👋
         </Typography>
 
         <Typography
           sx={{
+            mt: 0.6,
             fontSize: 13,
             color: "#64748b",
           }}
@@ -565,10 +704,6 @@ const Dashboard = () => {
           Here's what's happening with your business today.
         </Typography>
       </Box>
-
-      {/* =================================================
-          STAT CARDS
-          ================================================= */}
 
       <Box
         sx={{
@@ -582,16 +717,24 @@ const Dashboard = () => {
           mb: 3,
         }}
       >
-        {/* Customers */}
+      
 
         <Card
           elevation={0}
           sx={{
             border: "1px solid #e5e7eb",
             borderRadius: 3,
+            minHeight: 160,
           }}
         >
-          <CardContent sx={{ p: 3 }}>
+          <CardContent
+            sx={{
+              p: 3,
+              "&:last-child": {
+                pb: 3,
+              },
+            }}
+          >
             <Box
               sx={{
                 display: "flex",
@@ -630,10 +773,11 @@ const Dashboard = () => {
               sx={{
                 fontSize: 30,
                 fontWeight: 700,
+                lineHeight: 1.2,
                 color: "#111827",
               }}
             >
-              {totalCustomers}
+              {customers.length}
             </Typography>
 
             <Typography
@@ -648,16 +792,24 @@ const Dashboard = () => {
           </CardContent>
         </Card>
 
-        {/* Products */}
+       
 
         <Card
           elevation={0}
           sx={{
             border: "1px solid #e5e7eb",
             borderRadius: 3,
+            minHeight: 160,
           }}
         >
-          <CardContent sx={{ p: 3 }}>
+          <CardContent
+            sx={{
+              p: 3,
+              "&:last-child": {
+                pb: 3,
+              },
+            }}
+          >
             <Box
               sx={{
                 display: "flex",
@@ -696,10 +848,11 @@ const Dashboard = () => {
               sx={{
                 fontSize: 30,
                 fontWeight: 700,
+                lineHeight: 1.2,
                 color: "#111827",
               }}
             >
-              {totalProducts}
+              {products.length}
             </Typography>
 
             <Typography
@@ -714,16 +867,23 @@ const Dashboard = () => {
           </CardContent>
         </Card>
 
-        {/* Orders */}
-
+       
         <Card
           elevation={0}
           sx={{
             border: "1px solid #e5e7eb",
             borderRadius: 3,
+            minHeight: 160,
           }}
         >
-          <CardContent sx={{ p: 3 }}>
+          <CardContent
+            sx={{
+              p: 3,
+              "&:last-child": {
+                pb: 3,
+              },
+            }}
+          >
             <Box
               sx={{
                 display: "flex",
@@ -762,10 +922,11 @@ const Dashboard = () => {
               sx={{
                 fontSize: 30,
                 fontWeight: 700,
+                lineHeight: 1.2,
                 color: "#111827",
               }}
             >
-              {totalOrders}
+              {orders.length}
             </Typography>
 
             <Typography
@@ -780,16 +941,24 @@ const Dashboard = () => {
           </CardContent>
         </Card>
 
-        {/* Sales */}
+        {/* SALES */}
 
         <Card
           elevation={0}
           sx={{
             border: "1px solid #e5e7eb",
             borderRadius: 3,
+            minHeight: 160,
           }}
         >
-          <CardContent sx={{ p: 3 }}>
+          <CardContent
+            sx={{
+              p: 3,
+              "&:last-child": {
+                pb: 3,
+              },
+            }}
+          >
             <Box
               sx={{
                 display: "flex",
@@ -826,8 +995,12 @@ const Dashboard = () => {
 
             <Typography
               sx={{
-                fontSize: 30,
+                fontSize: {
+                  xs: 24,
+                  md: 28,
+                },
                 fontWeight: 700,
+                lineHeight: 1.2,
                 color: "#111827",
               }}
             >
@@ -847,35 +1020,34 @@ const Dashboard = () => {
         </Card>
       </Box>
 
-      {/* =================================================
-          RECENT ORDERS
-          ================================================= */}
-
+    
       <Card
         elevation={0}
         sx={{
           border: "1px solid #e5e7eb",
           borderRadius: 3,
           overflow: "hidden",
+          mb: 3,
         }}
       >
-        {/* Header */}
+    
 
         <Box
           sx={{
-            px: { xs: 2, md: 3 },
+            px: 2.5,
             py: 2.2,
+            borderBottom:
+              "1px solid #eef2f7",
+
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            gap: 2,
-            borderBottom: "1px solid #e5e7eb",
           }}
         >
           <Box>
             <Typography
               sx={{
-                fontSize: 17,
+                fontSize: 16,
                 fontWeight: 700,
                 color: "#111827",
               }}
@@ -885,246 +1057,222 @@ const Dashboard = () => {
 
             <Typography
               sx={{
+                mt: 0.4,
                 fontSize: 12,
                 color: "#94a3b8",
-                mt: 0.4,
               }}
             >
               Your latest orders
             </Typography>
           </Box>
 
-          {/* RIGHT SIDE BUTTONS */}
+       
 
-          <Stack
-            direction="row"
-            spacing={1}
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={generatePdf}
+            disabled={isGeneratingPdf}
+            startIcon={
+              <PictureAsPdfOutlinedIcon
+                sx={{
+                  fontSize: 18,
+                }}
+              />
+            }
+            sx={{
+              minWidth: 90,
+              height: 36,
+              borderRadius: 2,
+              textTransform: "none",
+              fontSize: 13,
+              fontWeight: 600,
+
+              color: "#2563eb",
+
+              borderColor: "#2563eb",
+
+              "&:hover": {
+                borderColor: "#1d4ed8",
+                backgroundColor: "#eff6ff",
+              },
+
+              "&.Mui-disabled": {
+                color: "#94a3b8",
+                borderColor: "#cbd5e1",
+              },
+            }}
           >
-            <Button
-              variant="outlined"
-              startIcon={<PrintOutlinedIcon />}
-              onClick={handlePrint}
-              sx={{
-                height: 38,
-                textTransform: "none",
-                fontSize: 13,
-                fontWeight: 600,
-                color: "#334155",
-                borderColor: "#e2e8f0",
-                borderRadius: 2,
-                px: 1.8,
-
-                "&:hover": {
-                  borderColor: "#cbd5e1",
-                  bgcolor: "#f8fafc",
-                },
-              }}
-            >
-              Print
-            </Button>
-
-            <Button
-              variant="contained"
-              startIcon={<PictureAsPdfOutlinedIcon />}
-              onClick={handleDownloadPDF}
-              sx={{
-                height: 38,
-                textTransform: "none",
-                fontSize: 13,
-                fontWeight: 600,
-                bgcolor: "#2563eb",
-                borderRadius: 2,
-                px: 1.8,
-
-                "&:hover": {
-                  bgcolor: "#1d4ed8",
-                },
-              }}
-            >
-              PDF
-            </Button>
-          </Stack>
+            {isGeneratingPdf
+              ? "Generating..."
+              : "PDF"}
+          </Button>
         </Box>
 
-        {/* =================================================
-            TABLE
-            ================================================= */}
+        
 
-        {currentOrders.length > 0 ? (
-          <>
-            <TableContainer
-              sx={{
-                overflowX: "auto",
-              }}
-            >
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell
-                      sx={{
-                        fontSize: 11,
-                        fontWeight: 700,
-                        color: "#94a3b8",
-                        py: 1.7,
-                        px: 3,
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      ORDER ID
-                    </TableCell>
-
-                    <TableCell
-                      sx={{
-                        fontSize: 11,
-                        fontWeight: 700,
-                        color: "#94a3b8",
-                        py: 1.7,
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      DATE
-                    </TableCell>
-
-                    <TableCell
-                      sx={{
-                        fontSize: 11,
-                        fontWeight: 700,
-                        color: "#94a3b8",
-                        py: 1.7,
-                      }}
-                    >
-                      CUSTOMER
-                    </TableCell>
-
-                    <TableCell
-                      align="right"
-                      sx={{
-                        fontSize: 11,
-                        fontWeight: 700,
-                        color: "#94a3b8",
-                        py: 1.7,
-                        px: 3,
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      TOTAL
-                    </TableCell>
-                  </TableRow>
-                </TableHead>
-
-                <TableBody>
-                  {currentOrders.map(
-                    (order: Order) => (
-                      <TableRow
-                        key={order._id}
-                        hover
-                      >
-                        <TableCell
-                          sx={{
-                            px: 3,
-                            py: 1.8,
-                            fontSize: 13,
-                            color: "#64748b",
-                          }}
-                        >
-                          #{order._id.slice(-6)}
-                        </TableCell>
-
-                        <TableCell
-                          sx={{
-                            py: 1.8,
-                            fontSize: 13,
-                            color: "#64748b",
-                            whiteSpace: "nowrap",
-                          }}
-                        >
-                          {formatDate(order.date)}
-                        </TableCell>
-
-                        <TableCell
-                          sx={{
-                            py: 1.8,
-                            fontSize: 13,
-                            color: "#64748b",
-                          }}
-                        >
-                          {getCustomerName(
-                            order.customer
-                          )}
-                        </TableCell>
-
-                        <TableCell
-                          align="right"
-                          sx={{
-                            px: 3,
-                            py: 1.8,
-                            fontSize: 13,
-                            fontWeight: 700,
-                            color: "#111827",
-                            whiteSpace: "nowrap",
-                          }}
-                        >
-                          {formatCurrency(
-                            order.totalCost
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    )
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
-
-            {/* =================================================
-                PAGINATION
-                ================================================= */}
-
-            {totalPages > 1 && (
-              <Box
-                sx={{
-                  px: 3,
-                  py: 2,
-                  display: "flex",
-                  justifyContent: "flex-end",
-                  borderTop: "1px solid #f1f5f9",
-                }}
-              >
-                <Pagination
-                  count={totalPages}
-                  page={page}
-                  onChange={handlePageChange}
-                  size="small"
-                  shape="rounded"
-                  color="primary"
-                />
-              </Box>
-            )}
-          </>
-        ) : (
-          /* =================================================
-             EMPTY STATE
-             ================================================= */
-
+        {recentOrders.length === 0 ? (
           <Box
             sx={{
-              minHeight: 220,
+              height: 200,
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              textAlign: "center",
-              px: 2,
             }}
           >
-            <Box>
-              <Typography
-                sx={{
-                  fontSize: 14,
-                  color: "#94a3b8",
-                }}
-              >
-                No orders available
-              </Typography>
-            </Box>
+            <Typography
+              sx={{
+                fontSize: 13,
+                color: "#94a3b8",
+              }}
+            >
+              No orders available
+            </Typography>
+          </Box>
+        ) : (
+          <Box
+            sx={{
+              width: "100%",
+              overflowX: "auto",
+            }}
+          >
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell
+                    sx={{
+                      fontSize: 11,
+                      fontWeight: 600,
+                      color: "#94a3b8",
+                      textTransform: "uppercase",
+                      borderBottom:
+                        "1px solid #eef2f7",
+                      py: 1.5,
+                      px: 2.5,
+                    }}
+                  >
+                    Order ID
+                  </TableCell>
+
+                  <TableCell
+                    sx={{
+                      fontSize: 11,
+                      fontWeight: 600,
+                      color: "#94a3b8",
+                      textTransform: "uppercase",
+                      borderBottom:
+                        "1px solid #eef2f7",
+                      py: 1.5,
+                    }}
+                  >
+                    Date
+                  </TableCell>
+
+                  <TableCell
+                    sx={{
+                      fontSize: 11,
+                      fontWeight: 600,
+                      color: "#94a3b8",
+                      textTransform: "uppercase",
+                      borderBottom:
+                        "1px solid #eef2f7",
+                      py: 1.5,
+                    }}
+                  >
+                    Customer
+                  </TableCell>
+
+                  <TableCell
+                    align="right"
+                    sx={{
+                      fontSize: 11,
+                      fontWeight: 600,
+                      color: "#94a3b8",
+                      textTransform: "uppercase",
+                      borderBottom:
+                        "1px solid #eef2f7",
+                      py: 1.5,
+                      px: 2.5,
+                    }}
+                  >
+                    Total
+                  </TableCell>
+                </TableRow>
+              </TableHead>
+
+              <TableBody>
+                {recentOrders.map(
+                  (order: Order) => (
+                    <TableRow
+                      key={order._id}
+                      sx={{
+                        "&:last-child td": {
+                          borderBottom: 0,
+                        },
+                      }}
+                    >
+                      
+
+                      <TableCell
+                        sx={{
+                          fontSize: 13,
+                          color: "#64748b",
+                          py: 1.6,
+                          px: 2.5,
+                        }}
+                      >
+                        #{order._id.slice(-6)}
+                      </TableCell>
+
+                  
+
+                      <TableCell
+                        sx={{
+                          fontSize: 13,
+                          color: "#64748b",
+                          py: 1.6,
+                        }}
+                      >
+                        {formatDate(
+                          order.date
+                        )}
+                      </TableCell>
+
+                    
+
+                      <TableCell
+                        sx={{
+                          fontSize: 13,
+                          color: "#64748b",
+                          py: 1.6,
+                        }}
+                      >
+                        {getCustomerName(
+                          order.customer
+                        )}
+                      </TableCell>
+
+                      
+
+                      <TableCell
+                        align="right"
+                        sx={{
+                          fontSize: 13,
+                          fontWeight: 700,
+                          color: "#111827",
+                          py: 1.6,
+                          px: 2.5,
+                        }}
+                      >
+                        {formatCurrency(
+                          order.totalCost
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  )
+                )}
+              </TableBody>
+            </Table>
           </Box>
         )}
       </Card>

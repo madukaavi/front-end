@@ -23,7 +23,7 @@ const useOrders = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Load all orders
+
   const loadOrders = useCallback(async () => {
     try {
       setLoading(true);
@@ -45,12 +45,12 @@ const useOrders = () => {
     }
   }, []);
 
-  // Load orders when page opens
+  
   useEffect(() => {
     loadOrders();
   }, [loadOrders]);
 
-  // Create order
+
   const createOrder = async (
     data: OrderData
   ) => {

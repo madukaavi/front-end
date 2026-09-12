@@ -21,7 +21,7 @@ const useProducts = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
 
-  // Load all products
+ 
   const loadProducts = useCallback(async () => {
     try {
       setLoading(true);
@@ -43,12 +43,12 @@ const useProducts = () => {
     }
   }, []);
 
-  // Load products when page opens
+
   useEffect(() => {
     loadProducts();
   }, [loadProducts]);
 
-  // Create product
+ 
   const createProduct = async (
     data: ProductData
   ) => {
@@ -75,7 +75,7 @@ const useProducts = () => {
     }
   };
 
-  // Update product
+
   const updateProduct = async (
     id: string,
     data: ProductData
@@ -103,7 +103,7 @@ const useProducts = () => {
     }
   };
 
-  // Delete product
+  
   const deleteProduct = async (
     id: string
   ) => {

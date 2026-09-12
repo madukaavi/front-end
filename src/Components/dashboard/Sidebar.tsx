@@ -25,11 +25,7 @@ const Sidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const user = storage.getUser();
-
-  const fullName = user?.fullName?.trim() || "User";
-
-  const initial = fullName.charAt(0).toUpperCase() || "U";
+ 
 
   const menuItems = [
     {
@@ -57,7 +53,7 @@ const Sidebar = () => {
   const handleLogout = () => {
     storage.clearAuth();
 
-    navigate("/login", {
+    navigate("/", {
       replace: true,
     });
   };
@@ -80,7 +76,7 @@ const Sidebar = () => {
         zIndex: 1200,
       }}
     >
-      {/* LOGO */}
+      
       <Box
         sx={{
           height: 68,
@@ -115,7 +111,7 @@ const Sidebar = () => {
         </Typography>
       </Box>
 
-      {/* MENU */}
+   
       <Box
         sx={{
           px: 1.5,
@@ -190,7 +186,7 @@ const Sidebar = () => {
         </List>
       </Box>
 
-      {/* BOTTOM USER */}
+    
       <Box>
         <Divider />
 
@@ -217,7 +213,7 @@ const Sidebar = () => {
                 fontWeight: 600,
               }}
             >
-              {initial}
+              
             </Avatar>
 
             <Box
@@ -235,7 +231,7 @@ const Sidebar = () => {
                   whiteSpace: "nowrap",
                 }}
               >
-                {fullName}
+              
               </Typography>
 
               <Typography
@@ -247,7 +243,7 @@ const Sidebar = () => {
                   whiteSpace: "nowrap",
                 }}
               >
-                {user?.email || ""}
+                
               </Typography>
             </Box>
           </Box>

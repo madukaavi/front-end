@@ -98,7 +98,6 @@ const ProductTable = ({
         </TableHead>
 
         <TableBody>
-          {/* Loading */}
           {loading ? (
             <>
               {[1, 2, 3, 4, 5].map((row) => (
@@ -129,20 +128,15 @@ const ProductTable = ({
               ))}
             </>
           ) : products.length === 0 ? (
-            /* Empty */
             <TableRow>
               <TableCell
                 colSpan={5}
-                sx={{
-                  py: 6,
-                }}
+                sx={{ py: 6 }}
               >
                 <Box sx={{ textAlign: "center" }}>
                   <Typography
                     color="text.primary"
-                    sx={{
-                      fontWeight: 600,
-                    }}
+                    sx={{ fontWeight: 600 }}
                   >
                     No products found
                   </Typography>
@@ -150,9 +144,7 @@ const ProductTable = ({
                   <Typography
                     variant="body2"
                     color="text.secondary"
-                    sx={{
-                      mt: 0.5,
-                    }}
+                    sx={{ mt: 0.5 }}
                   >
                     Add your first product to get
                     started.
@@ -161,13 +153,11 @@ const ProductTable = ({
               </TableCell>
             </TableRow>
           ) : (
-            /* Products */
             products.map((product) => (
               <TableRow
                 key={product._id}
                 hover
               >
-                {/* Product */}
                 <TableCell>
                   <Typography
                     sx={{
@@ -182,29 +172,25 @@ const ProductTable = ({
                   </Typography>
                 </TableCell>
 
-                {/* Unit Price */}
                 <TableCell>
-                  <Typography
-                    sx={{
-                      fontWeight: 500,
-                    }}
-                  >
+                  <Typography sx={{ fontWeight: 500 }}>
                     Rs.{" "}
                     {Number(
                       product.unitPrice
-                    ).toLocaleString("en-LK", {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}
+                    ).toLocaleString(
+                      "en-LK",
+                      {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      }
+                    )}
                   </Typography>
                 </TableCell>
 
-                {/* Quantity */}
                 <TableCell>
                   {product.qtyOnHand}
                 </TableCell>
 
-                {/* Stock Status */}
                 <TableCell>
                   {product.qtyOnHand === 0 ? (
                     <Chip
@@ -227,7 +213,6 @@ const ProductTable = ({
                   )}
                 </TableCell>
 
-                {/* Actions */}
                 <TableCell align="right">
                   <Tooltip title="Edit Product">
                     <IconButton

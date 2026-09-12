@@ -283,7 +283,7 @@ const OrderForm = ({
             pt: 1,
           }}
         >
-          {/* Date */}
+       
           <TextField
             label="Order Date"
             type="date"
@@ -306,7 +306,6 @@ const OrderForm = ({
             }}
           />
 
-          {/* Customer */}
           <FormControl
             fullWidth
             error={Boolean(errors.customer)}
@@ -350,7 +349,7 @@ const OrderForm = ({
             )}
           </FormControl>
 
-          {/* Products */}
+        
           <Box>
             <Box
               sx={{
@@ -506,7 +505,7 @@ const OrderForm = ({
             </Box>
           </Box>
 
-          {/* Total */}
+        
           <Box
             sx={{
               display: "flex",

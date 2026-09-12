@@ -17,10 +17,10 @@ export const useLogin = () => {
 
       const response = await authService.login(data);
 
-      // Save token
+      
       storage.setToken(response.token);
 
-      // IMPORTANT: Save logged-in user
+     
       storage.setUser(response.user);
 
       return response;

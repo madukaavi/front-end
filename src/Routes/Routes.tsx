@@ -21,7 +21,7 @@ function AppRoutes() {
     <BrowserRouter>
       <Routes>
         
-        {/* Auth */}
+        
         <Route
           path="/"
           element={<Login />}
@@ -32,7 +32,7 @@ function AppRoutes() {
           element={<Register />}
         />
 
-        {/* Dashboard */}
+        
         <Route element={<ProtectedRoute />}>
           <Route element={<DashboardLayout />}>
             
